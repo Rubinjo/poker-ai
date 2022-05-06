@@ -1,0 +1,5 @@
+# run: conda env create --file environment.yml
+name: py-poker
+dependencies:
+  - python >=3.7,<3.10
+  - pip
