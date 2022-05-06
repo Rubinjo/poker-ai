@@ -1,5 +1,12 @@
 # run: conda env create --file environment.yml
-name: py-poker
+name: pypoker
+channels:
+  - conda-forge
+  - pytorch
 dependencies:
   - python >=3.7,<3.10
   - pip
+  - pytorch
+  - torchvision
+  - torchaudio
+  - cudatoolkit=11.3
