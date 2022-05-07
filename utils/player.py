@@ -8,7 +8,7 @@ class Player:
         self.balance = 1000
         self.hand = []
         self._get_hand()
-        # TODO: remove
+        # TODO: remove; here we just give one player a lot of money to allow testing
         if self.name == 'Player 0':
             self.balance = 10000
 
