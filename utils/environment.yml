@@ -10,3 +10,5 @@ dependencies:
   - torchvision
   - torchaudio
   - cudatoolkit=11.3
+  - pip:
+      - phevaluator

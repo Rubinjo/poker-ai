@@ -2,17 +2,7 @@ import time
 from utils.cards import Deck
 from utils.player import Player
 from collections import deque
-from utils.evaluateWinner import evaluateWinner # TODO: should this be a function or a class?
-
-# TODO: if player is all-in, then make sure that they are not allowed to play again. check if amount of players + folded players is total players -1 (the game is then over), and run to the evaluate winner function.
-# TODO: if players are all-in, make sure to save their total bettings somewhere to use it in the winnings distribution
-# TODO: check if all players are allowed to play/not allowed to play, when it makes sense
-    # folding has been handled
-    # this is already wrong when someone is all-in, are there other situtations?
-    # first round should start at the player after the big blind (in 2p Poker this is small blind)
-        # but after the flop, the player in small blind should start the betting
-        # for 3p+ poker, we need to make sure this is fixed. Maybe we can use a queue to keep track of the players that are allowed to play (hier kwam github mee)
-        # or we can shift the list of players before/after the flop and at the end of the game 
+from phevaluator import evaluate_cards
 
 class Pot:
     def __init__(self):
@@ -28,7 +18,7 @@ class Pot:
 class Game:
     def __init__(self, n_players: int):
         self.highest_bet = 0 
-        self.n_folded_players = 0
+        self.playing_players = n_players
         self.blind_values = [10, 20] # for 2 player games
         self.blinds = (n_players - 2) * [0]
         self.blinds.extend(self.blind_values) # for 2 player games
@@ -38,6 +28,7 @@ class Game:
         for i in range(n_players):
             self.players.append(Player(self.deck, f'Player {i}'))
         self.pot = Pot()
+        self.winners_lists = []
 
     def deduct_blinds(self):
         for i, player in enumerate(self.players):
@@ -60,24 +51,74 @@ class Game:
         print(f'Board: {board}')
         print('-------------')
 
+    def getWinners(self, player_scores):
+        try:
+            while True:
+                winners = [key for key, value in player_scores.items() if value == max(player_scores.values())] # get highest score players in the dict
+
+                # if winner was all-in, get runner-up winner(s)
+                for winner in winners:
+                    if not winner.is_all_in:
+                        print('yea')
+                        self.winners_lists.append(winners)
+                        raise StopIteration 
+                # the winners are all all-in, so get the runner-up winner(s)
+                # remove winners from player_scores dict
+
+                print(len(player_scores))
+                if len(winners) == len(player_scores):
+                    print('yes', len(winners))
+                    self.winners_lists.append(winners)
+                    raise StopIteration
+
+                for winner in winners:
+                    player_scores.pop(winner)
+                # get the runner-up winner(s)
+                self.winners_lists.append(winners)
+                self.getWinners(player_scores)
+                raise StopIteration
+        except StopIteration:
+            pass
+
+    def evaluateWinner(self):
+        # TODO: fix that if the winner is all-in, other players can win as well from other players
+        player_scores = {}
+        for player in self.players:
+            if player.is_folded: # player is not allowed to be evaluated for the winnings
+                continue
+            # get the string_form of the cards
+            seven_card_hand = [card.string_form for card in player.hand + self.board_cards]
+            player_scores[player] = evaluate_cards(*seven_card_hand)
+
+        self.getWinners(player_scores)
+        
+        
+        # print("Winning players:", winners)
+        # return winners
+
+    def distribute_winnings(self, winners):
+       #TODO: give money 
+        pass
+
     def play_step(self):
         last_player_to_raise = None
         done = False
 
         while done == False:
+            # if only one player remains, end round
             for player in self.players:
-                # if only one player remains, end round
-                if len(self.players) - self.n_folded_players <= 1:
-                    return 'finished'
-                # if no player has played yet (last_player_to_raise == None), set it to the current player as they will not be allowed to play anymore
+                if self.playing_players <= 1: # TODO: why does this work?
+                    return 'finished' 
                 time.sleep(.5)
-                # check if player is folded, or was the last person to raise, then skip or break
+                # check if the player to play was the last to raise, then the step is over
                 if player.name == last_player_to_raise:
                     done = True
                     break
+                # if no player has played yet (last_player_to_raise == None), set it to the current player as they will not be allowed to play anymore
                 if last_player_to_raise == None:
                     last_player_to_raise = player.name
-                if player.is_folded:
+                # check if player is folded, or is all-in, then skip or break
+                if player.is_folded or player.is_all_in: # if player is not playing, skip
                     continue
 
                 # print game info
@@ -90,12 +131,10 @@ class Game:
 
                 # get action of player and evaluate
                 action = player.get_action()
-                if action == 'f':
-                    # player folded, add to amount of folded players
-                    self.n_folded_players += 1
-                player_total_bet = player.evaluate_action(action, self.highest_bet, self.pot) 
-                # TODO: if save player bets in a list (for giving ppl their right share of the pot)
-                # self.pot.raise(player, player_total_bet)
+
+                player_total_bet, finished_player = player.evaluate_action(action, self.highest_bet, self.pot) 
+                if finished_player:
+                    self.playing_players -= 1
 
                 if player_total_bet > self.highest_bet:
                     # player has raised, so update highest bet and all players get to move again
@@ -110,6 +149,10 @@ class Game:
 
         # play pre-flop
         self.play_step()
+
+        # rotate players to make sure the small blind starts the betting
+        self.players.rotate(2)
+
         # deal flop and play another round
         print('dealing flop')
         self.board_cards.append(self.deck.deal())
@@ -125,12 +168,16 @@ class Game:
         self.board_cards.append(self.deck.deal())
         self.play_step()
         # determine winner
-        print('determining winner')
-        # TODO: determine winner
-        winner = evaluateWinner(self.players, self.board_cards) 
+        winners = self.evaluateWinner()
+        # distribute winnings
+        print('distributing winnings')
+        self.distribute_winnings(winners) 
         # rotating the blinds
-        self.players.rotate(1)
+        self.players.rotate(-1)
 
 print('\n')            
-poker = Game(n_players=2)
+poker = Game(n_players=4)
 poker.play_round()
+# TODO: make more than one round possible
+
+# TODO: if everyone folds, the big blind should win; also happens later when ppl randomly fold

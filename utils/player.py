@@ -48,29 +48,27 @@ class Player:
         self.is_folded = True
 
     def _call(self, highest_bet: int, pot):
-        if highest_bet - self.total_bet > self.balance: # player cannot fully call
+        actual_bet= min(highest_bet - self.total_bet, self.balance)
+        self.balance -= actual_bet
+        self.total_bet += actual_bet
+        pot.add_to_pot(actual_bet)
+        if self.balance == 0:
+            self.is_all_in = True
             print(f'Player {self.name} is all-in!')
-            pot.add_to_pot(self.balance) # add the all-in amount to pot
-            self.total_bet += self.balance
-            self.balance = 0
-        else:
-            print(f'{highest_bet} - {self.total_bet}')
-            pot.add_to_pot(highest_bet - self.total_bet)
-            self.balance -= highest_bet - self.total_bet
-            self.total_bet = highest_bet
+
+    
 
     def _raise(self, raise_amount: int, pot):
-        # TODO: discuss with R
-        # this could be changed where we make actual_bet = min(raise_amount, self.balance), and then just use that to bet and update the balance and add to pot
-        if raise_amount > self.balance:
+        actual_bet = min(raise_amount, self.balance)
+        self.balance -= actual_bet
+        self.total_bet += actual_bet
+        pot.add_to_pot(actual_bet)
+        if self.balance == 0:
+            self.is_all_in = True
             print(f'Player {self.name} is all-in!')
-            pot.add_to_pot(self.balance) # add the all-in amount to pot
-            self.total_bet += self.balance
-            self.balance = 0
-        else:
-            pot.add_to_pot(raise_amount)
-            self.total_bet += raise_amount
-            self.balance -= raise_amount
+
+        
+
             
 
     def evaluate_action(self, action: str, highest_bet: int, pot):
@@ -82,4 +80,4 @@ class Player:
             # call, then raise the amount
             self._call(highest_bet, pot)
             self._raise(int(action[1:]), pot)
-        return self.total_bet
+        return self.total_bet, (self.is_folded or self.is_all_in)
