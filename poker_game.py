@@ -95,25 +95,18 @@ class Game:
         # return winners
 
     def distribute_winnings(self):
-        # TODO: Test method extensively
-        print(self.winners_lists)
         for winner_group in self.winners_lists:
             if (self.pot.amount > 0):
                 n_winner_group = len(winner_group)
                 payout = 0
+                winner_group_bet = winner_group[0].total_bet
                 for player in self.players:
-                    # TODO: fix that if 'player' == winner_group[0], their balance is removed, but that creates issues in further iterations of the min() function.
-                    reward = min(winner_group[0].total_bet, player.total_bet)
+                    reward = min(winner_group_bet, player.total_bet)
                     payout += reward
-                    print(player.name, 'gives', reward, 'to', winner_group[0].name)
                     player.total_bet -= reward
                 for winning_player in winner_group:
-                    # TODO: If winnigs is not easily dividable to integer
                     winning_player.balance += payout // n_winner_group
                     self.pot.amount -= payout // n_winner_group
-                    print(winning_player.name, 'won', payout // n_winner_group)
-        for player in self.players:
-            print(player.name, 'has', player.balance)
 
     def play_step(self):
         last_player_to_raise = None

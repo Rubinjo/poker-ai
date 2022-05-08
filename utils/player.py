@@ -11,6 +11,8 @@ class Player:
         # TODO: remove; here we just give one player a lot of money to allow testing
         if self.name == 'Player 0':
             self.balance = 10000
+        elif self.name == 'Player 1':
+            self.balance = 1500
 
     def _get_hand(self):
         for _ in range(2):
