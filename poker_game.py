@@ -59,7 +59,6 @@ class Game:
                 # if winner was all-in, get runner-up winner(s)
                 for winner in winners:
                     if not winner.is_all_in:
-                        print('yea')
                         self.winners_lists.append(winners)
                         raise StopIteration 
                 # the winners are all all-in, so get the runner-up winner(s)
@@ -67,7 +66,6 @@ class Game:
 
                 print(len(player_scores))
                 if len(winners) == len(player_scores):
-                    print('yes', len(winners))
                     self.winners_lists.append(winners)
                     raise StopIteration
 
@@ -96,9 +94,20 @@ class Game:
         # print("Winning players:", winners)
         # return winners
 
-    def distribute_winnings(self, winners):
-       #TODO: give money 
-        pass
+    def distribute_winnings(self):
+        # TODO: Test method extensively
+        for winner_group in self.winners_lists:
+            if (self.pot.amount > 0):
+                n_winner_group = len(winner_group)
+                payout = 0
+                for player in self.players:
+                    reward = min(winner_group[0].total_bet, player.total_bet)
+                    payout += reward
+                    player.total_bet -= reward
+                for winning_player in winner_group:
+                    # TODO: If winnigs is not easily dividable to integer
+                    winning_player.balance += payout / n_winner_group
+                    self.pot.amount -= payout / n_winner_group
 
     def play_step(self):
         last_player_to_raise = None
@@ -168,10 +177,10 @@ class Game:
         self.board_cards.append(self.deck.deal())
         self.play_step()
         # determine winner
-        winners = self.evaluateWinner()
+        self.evaluateWinner()
         # distribute winnings
         print('distributing winnings')
-        self.distribute_winnings(winners) 
+        self.distribute_winnings() 
         # rotating the blinds
         self.players.rotate(-1)
 
