@@ -69,7 +69,13 @@ class Player:
             self.is_all_in = True
             print(f'Player {self.name} is all-in!')
 
-        
+    def reset(self, deck):
+        self.is_folded = False
+        self.is_all_in = False
+        self.total_bet = 0
+        self.hand = []
+        self.deck = deck
+        self._get_hand()
 
             
 

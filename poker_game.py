@@ -29,6 +29,7 @@ class Game:
             self.players.append(Player(self.deck, f'Player {i}'))
         self.pot = Pot()
         self.winners_lists = []
+        self.n_rounds = 0
 
     def deduct_blinds(self):
         for i, player in enumerate(self.players):
@@ -79,7 +80,6 @@ class Game:
             pass
 
     def evaluateWinner(self):
-        # TODO: fix that if the winner is all-in, other players can win as well from other players
         player_scores = {}
         for player in self.players:
             if player.is_folded: # player is not allowed to be evaluated for the winnings
@@ -115,7 +115,7 @@ class Game:
         while done == False:
             # if only one player remains, end round
             for player in self.players:
-                if self.playing_players <= 1: # TODO: why does this work?
+                if self.playing_players <= 1:
                     return 'finished' 
                 time.sleep(.5)
                 # check if the player to play was the last to raise, then the step is over
@@ -151,7 +151,26 @@ class Game:
 
                 print('\n'*3) # clear screen
 
-    def play_round(self):
+    def reset(self):
+        self.deck = Deck()
+        self.highest_bet = 0
+        self.board_cards = []
+        self.pot = Pot()
+        self.winners_lists = []
+        self.playing_players = len(self.players)
+
+        for player in self.players:
+            player.reset(self.deck)
+            
+    def continue_playing(self):
+        # check if the game has lost a player, then we stop the game
+        for player in self.players:
+            if player.balance <= 0:
+                print(player.name, 'is skeer')
+                return False
+        return True
+
+    def play_poker(self):
         # deduct the blinds from the (correct) players, and add them to the pot
         self.deduct_blinds()
 
@@ -167,25 +186,42 @@ class Game:
         self.board_cards.append(self.deck.deal())
         self.board_cards.append(self.deck.deal())
         self.play_step()
+
         # deal turn and play another round
         print('dealing turn')
         self.board_cards.append(self.deck.deal())
         self.play_step()
+
         # deal river and play another round
         print('dealing river')
         self.board_cards.append(self.deck.deal())
         self.play_step()
+
         # determine winner
         self.evaluateWinner()
+
         # distribute winnings
         print('distributing winnings')
         self.distribute_winnings() 
-        # rotating the blinds
+
+        # check if continueing play
+        if not self.continue_playing():
+            print('it is over...')
+            return
+        
+        # reset the game
+        self.reset()
+
+        # turn blinds position to the next player
         self.players.rotate(-1)
+
+        # play another round
+        self.n_rounds += 1
+        print(f'Starting a new round, Round: {self.n_rounds + 1}', '\n'*2)
+        self.play_poker()
 
 print('\n')            
 poker = Game(n_players=4)
-poker.play_round()
-# TODO: make more than one round possible
 
-# TODO: if everyone folds, the big blind should win; also happens later when ppl randomly fold
+poker.play_poker()
+

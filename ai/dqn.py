@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
 
+#TODO: make ai agent
+
 class DQN(nn.Module):
     def __init__(self, input_dim: int, output_dim: int):
         super().__init()
