@@ -1,4 +1,3 @@
-import time 
 from utils.cards import Deck
 from utils.player import Player
 from collections import deque
@@ -13,7 +12,6 @@ class Pot:
 
     def print_status(self):
         print(f'Pot: {self.amount}')
-    
 
 class Game:
     def __init__(self, n_players: int):
@@ -38,7 +36,6 @@ class Game:
             # set the highest bet to the highest blind
         self.highest_bet = max(self.blinds)
             
-        
     def print_players(self):
         for player in self.players:
             player.print_hand()
@@ -53,6 +50,7 @@ class Game:
         print('-------------')
 
     def getWinners(self, player_scores):
+        #TODO: setWinners(self, player_scores)? this function does not give any output, would be weird to get winners
         try:
             while True:
                 winners = [key for key, value in player_scores.items() if value == max(player_scores.values())] # get highest score players in the dict
@@ -117,7 +115,6 @@ class Game:
             for player in self.players:
                 if self.playing_players <= 1:
                     return 'finished' 
-                time.sleep(.5)
                 # check if the player to play was the last to raise, then the step is over
                 if player.name == last_player_to_raise:
                     done = True
@@ -171,6 +168,9 @@ class Game:
         return True
 
     def play_poker(self):
+        #TODO: abstract this further (playing flop, playing river etc)
+        #TODO: change play_step() function name to betting_round()
+        
         # deduct the blinds from the (correct) players, and add them to the pot
         self.deduct_blinds()
 

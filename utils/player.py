@@ -1,5 +1,9 @@
+from hyperparameters import DEVELOPMENT_MODE
+from ai.dqn import DQNAgent
+
 class Player:
     def __init__(self, deck, name: str):
+        agent = DQNAgent()
         self.deck = deck
         self.name = name
         self.is_folded = False
@@ -13,6 +17,7 @@ class Player:
             self.balance = 10000
         elif self.name == 'Player 1':
             self.balance = 1500
+        
 
     def _get_hand(self):
         for _ in range(2):
@@ -36,7 +41,11 @@ class Player:
     def get_action(self, possible_actions=['f', 'c', 'r']):
         self.print_status()
         print('\n')
-        action = input(f'Action {self.name} (f/c/r(x)): ')
+
+        if DEVELOPMENT_MODE:
+            action = input(f'Action {self.name} (f/c/r(x)): ')
+        else: 
+            action = self.agent.get_action(self.hand, self.balance, self.total_bet)
         if action in possible_actions:
             if action == 'r':
                 raise_amount = int(input('Raise amount: '))
@@ -58,8 +67,6 @@ class Player:
             self.is_all_in = True
             print(f'Player {self.name} is all-in!')
 
-    
-
     def _raise(self, raise_amount: int, pot):
         actual_bet = min(raise_amount, self.balance)
         self.balance -= actual_bet
@@ -76,8 +83,6 @@ class Player:
         self.hand = []
         self.deck = deck
         self._get_hand()
-
-            
 
     def evaluate_action(self, action: str, highest_bet: int, pot):
         if action[0] == 'f':
